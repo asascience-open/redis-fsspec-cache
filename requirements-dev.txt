@@ -1,0 +1,5 @@
+-r requirements.txt
+s3fs
+gcsfs
+xarray
+jinja2
