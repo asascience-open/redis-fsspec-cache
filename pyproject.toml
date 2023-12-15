@@ -1,0 +1,22 @@
+[project]
+name = "redis_block_cache"
+version = "0.0.1"
+authors = [
+  { name="Matthew Iannucci", email="mpiannucci@gmail.com" },
+]
+description = "A prototype redis cache for fsspec"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/mpiannucci/redis_block_cache"
+Issues = "https://github.com/mpiannucci/redis_block_cache/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
