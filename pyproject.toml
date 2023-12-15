@@ -12,6 +12,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    'fsspec',
+]
 
 [project.urls]
 Homepage = "https://github.com/mpiannucci/redis_block_cache"
