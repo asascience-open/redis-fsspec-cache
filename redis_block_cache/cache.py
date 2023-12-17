@@ -25,6 +25,10 @@ class RedisBlockCache(BaseCache):
     maxblocks : int
         The maximum number of blocks to cache for. The maximum memory
         use for this cache is then ``blocksize * maxblocks``.
+    redis : Redis
+        A redis client to use as a backend.
+    filename : str
+        The name of the file to use as a key prefix in redis.
     """
 
     name = "redisblockcache"
@@ -55,10 +59,23 @@ class RedisBlockCache(BaseCache):
             stop = self.size
         if start >= self.size or start >= stop:
             return b""
-        return self.fetcher(start, stop)
 
         # byte position -> block numbers
-        _start_block_number = start // self.blocksize
-        _end_block_number = stop // self.blocksize
+        start_block_number = start // self.blocksize
+        end_block_number = stop // self.blocksize
 
+        blocks = bytearray()
+        for i_block in range(start_block_number, end_block_number + 1):
+            block = self._fetch_cache_block(i_block)
+            blocks.extend(block)
 
+        return bytes(blocks)
+
+    def _fetch_cache_block(self, i_block: int) -> bytes:
+        block = self.redis.get(f"{self.filename}-{i_block}")
+        if block is None:
+            block = self.fetcher(
+                i_block * self.blocksize, (i_block + 1) * self.blocksize
+            )
+            self.redis.set(f"{self.filename}-{i_block}", block)
+        return block
