@@ -1,5 +1,5 @@
 [project]
-name = "redis-block-cache"
+name = "redis-block-fsspec-cache"
 version = "0.0.1"
 authors = [
   { name="Matthew Iannucci", email="mpiannucci@gmail.com" },
@@ -17,8 +17,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mpiannucci/redis-block-cache"
-Issues = "https://github.com/mpiannucci/redis-block-cache/issues"
+Homepage = "https://github.com/mpiannucci/redis-block-fsspec-cache"
+Issues = "https://github.com/mpiannucci/redis-block-fsspec-cache/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
