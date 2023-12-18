@@ -1,4 +1,4 @@
-# redis_block_cache
+# redis_block_fs_cache
 
-A prototype redis based cache for fsspec
+A prototype redis based filesystem cache for fsspec
 
