@@ -1,25 +1,28 @@
-from typing import Callable, ClassVar
+from typing import Any, Callable, ClassVar
 from fsspec import AbstractFileSystem, filesystem
 from fsspec.implementations.cache_mapper import AbstractCacheMapper, create_cache_mapper
 from redis import Redis
+
+from redis_block_fsspec_cache.cache import RedisBlockCache
 
 
 class RedisCachingFileSystem(AbstractFileSystem):
     """A caching filesystem that uses Redis as a backend, layered over another filesystem.
 
     This class implements chunk-wise local storage of remote files, for quick
-    access after the initial download. The raw data is stored blockwise in a 
-    Redis instance, keyed by the filename and block. The TTL of the blocks is 
+    access after the initial download. The raw data is stored blockwise in a
+    Redis instance, keyed by the filename and block. The TTL of the blocks is
     set to 1 day by default, but can be configured with the `ttl` parameter.
     """
 
-    protocol: ClassVar[str | tuple[str, ...]] = ("rediscached")
+    protocol: ClassVar[str | tuple[str, ...]] = "rediscached"
 
     def __init__(
         self,
         target_protocol=None,
-        redis_host='localhost',
-        redis_port='6379',
+        redis_host="localhost",
+        redis_port="6379",
+        redis=None,
         check_files=False,
         expiry_time=604800,
         target_options=None,
@@ -40,6 +43,9 @@ class RedisCachingFileSystem(AbstractFileSystem):
             localhost.
         redis_port: str
             the port of the redis instance to connect with. Defaults to 6379.
+        redis: Redis
+            A redis client to use as a backend. If not provided, one will be
+            created using the host and port.
         check_files: bool
             Whether to explicitly see if the UID of the remote file matches
             the stored one before using. Warning: some file systems such as
@@ -77,13 +83,13 @@ class RedisCachingFileSystem(AbstractFileSystem):
             raise ValueError(
                 "Both filesystems (fs) and target_protocol may not be both given."
             )
-        
+
         self.redis = Redis(host=redis_host, port=redis_port, db=0)
         self.kwargs = target_options or {}
         self.expiry = expiry_time
         self.check_files = check_files
         self.compression = compression
-        
+
         if same_names is not None and cache_mapper is not None:
             raise ValueError(
                 "Cannot specify both same_names and cache_mapper in "
@@ -95,7 +101,12 @@ class RedisCachingFileSystem(AbstractFileSystem):
             self._mapper = create_cache_mapper(
                 same_names if same_names is not None else False
             )
-        
+
+        if redis is not None:
+            self.redis = redis
+        else:
+            self.redis = Redis(host=redis_host, port=redis_port, db=0)
+
         self.target_protocol = (
             target_protocol
             if isinstance(target_protocol, str)
@@ -108,3 +119,86 @@ class RedisCachingFileSystem(AbstractFileSystem):
             return self.fs._strip_protocol(type(self)._strip_protocol(path))
 
         self._strip_protocol: Callable = _strip_protocol
+
+    def _open(
+        self,
+        path,
+        mode="rb",
+        block_size=None,
+        autocommit=True,
+        cache_options=None,
+        **kwargs,
+    ):
+        """Wrap the target _open
+
+        TODO: impl
+        """
+        path = self._strip_protocol(path)
+
+        path = self.fs._strip_protocol(path)
+        if "r" not in mode:
+            # When not reading, just pass through
+            return self.fs._open(
+                path,
+                mode=mode,
+                block_size=block_size,
+                autocommit=autocommit,
+                cache_options=cache_options,
+                **kwargs,
+            )
+
+        f = self.fs._open(
+            path,
+            mode=mode,
+            block_size=block_size,
+            autocommit=autocommit,
+            cache_options=cache_options,
+            cache_type="none",
+            **kwargs,
+        )
+
+        # TODO: compression
+        f.cache = RedisBlockCache(f.blocksize, f._fetch_range, f.size, path, self.redis)
+        return f
+
+    def hash_name(self, path: str, *args: Any) -> str:
+        # Kept for backward compatibility with downstream libraries.
+        # Ignores extra arguments, previously same_name boolean.
+        return self._mapper(path)
+
+    def __eq__(self, other):
+        """Test for equality."""
+        if self is other:
+            return True
+        if not isinstance(other, type(self)):
+            return False
+        return (
+            self.kwargs == other.kwargs
+            and self.cache_check == other.cache_check
+            and self.check_files == other.check_files
+            and self.expiry == other.expiry
+            and self.compression == other.compression
+            and self._mapper == other._mapper
+            and self.target_protocol == other.target_protocol
+        )
+
+    def __hash__(self):
+        """Calculate hash."""
+        return (
+            hash(str(self.kwargs))
+            ^ hash(self.cache_check)
+            ^ hash(self.check_files)
+            ^ hash(self.expiry)
+            ^ hash(self.compression)
+            ^ hash(self._mapper)
+            ^ hash(self.target_protocol)
+        )
+
+    def to_json(self):
+        """Calculate JSON representation.
+
+        Not implemented yet for CachingFileSystem.
+        """
+        raise NotImplementedError(
+            "CachingFileSystem JSON representation not implemented"
+        )
