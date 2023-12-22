@@ -59,8 +59,6 @@ class RedisBlockCache(BaseCache):
         if start >= self.size or start >= stop:
             return b""
 
-        print("HITTT")
-
         # byte position -> block numbers
         start_block_number = start // self.blocksize
         end_block_number = stop // self.blocksize
