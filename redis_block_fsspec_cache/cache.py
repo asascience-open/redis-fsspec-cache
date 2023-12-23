@@ -61,6 +61,7 @@ class RedisBlockCache(BaseCache):
 
         # byte position -> block numbers
         start_block_number = start // self.blocksize
+        start_block_offset = start % self.blocksize
         end_block_number = stop // self.blocksize
 
         blocks = bytearray()
@@ -69,7 +70,9 @@ class RedisBlockCache(BaseCache):
             block = self._fetch_cache_block(i_block)
             blocks.extend(block)
 
-        return bytes(blocks)
+        all_bytes = bytes(blocks)
+
+        return all_bytes[start_block_offset:start_block_offset + (stop - start)]
 
     def _fetch_cache_block(self, i_block: int) -> bytes:
         block = self.redis.get(f"{self.filename}-{i_block}")
