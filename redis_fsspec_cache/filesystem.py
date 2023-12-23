@@ -3,7 +3,7 @@ from fsspec import AbstractFileSystem, filesystem
 from fsspec.implementations.cache_mapper import AbstractCacheMapper, create_cache_mapper
 from redis import Redis
 
-from redis_fsspec_cache.cache import RedisBlockCache
+from redis_fsspec_cache.cache import RedisBlockCache, RedisChunkCache
 
 
 class RedisCachingFileSystem(AbstractFileSystem):
@@ -25,6 +25,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
         redis=None,
         check_files=False,
         expiry_time=604800,
+        method="block",
         target_options=None,
         fs=None,
         same_names: bool | None = None,
@@ -55,6 +56,11 @@ class RedisCachingFileSystem(AbstractFileSystem):
             The time in seconds after which a redis copy is considered useless.
             Set to falsy to prevent expiry. The default is equivalent to one
             week.
+        method : str
+            The method to use for caching. One of 'block' or 'chunk'. 'block' will use 
+            the RedisBlockCache, which caches blocks of a fixed size. 'chunk' will use
+            the RedisChunkCache, which caches chunks of arbitrary size as they are
+            requested.
         target_options: dict or None
             Passed to the instantiation of the FS, if fs is None.
         fs: filesystem instance
@@ -89,6 +95,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
         self.expiry = expiry_time
         self.check_files = check_files
         self.compression = compression
+        self.method = method
 
         if same_names is not None and cache_mapper is not None:
             raise ValueError(
@@ -158,7 +165,10 @@ class RedisCachingFileSystem(AbstractFileSystem):
         )
 
         # TODO: compression
-        f.cache = RedisBlockCache(f.blocksize, f._fetch_range, f.size, path, self.redis)
+        if self.method == "block":
+            f.cache = RedisBlockCache(f.blocksize, f._fetch_range, f.size, path, self.redis, self.expiry)
+        elif self.method == "chunk":
+            f.cache = RedisChunkCache(f.blocksize, f._fetch_range, f.size, path, self.redis, self.expiry)
         return f
 
     def hash_name(self, path: str, *args: Any) -> str:

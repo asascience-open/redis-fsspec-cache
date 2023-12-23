@@ -23,6 +23,7 @@ fs = RedisCachingFileSystem(
     redis_host="localhost",
     redis_port=6380,
     expiry_time=60,
+    method="chunk"
     target_protocol="s3",
     target_options={
         'anon': True,
@@ -30,9 +31,13 @@ fs = RedisCachingFileSystem(
 )
 ```
 
-When a block is cached, it will be visible in redis using the `KEYS` command:
+When a block or chunk is cached, it will be visible in redis using the `KEYS` command:
 
 ```bash
 KEYS *
 1) "noaa-hrrr-bdp-pds/hrrr.20230927/conus/hrrr.t00z.wrfsubhf00.grib2-0"
 ```
+
+### Block vs Chunk Caching
+
+The `method` parameter controls whether the cache will store blocks or chunks. When `method="block"`, the cache will store each file block as a separate key in redis. When `method="chunk"`, the cache will store each file chunk as a separate key in redis. This distinction is important when considering the size of target chunks, for example when accessing GRIB or NetCDF files from cloud storage, where data is accessed as specific chunks at predetermined byte ranges. In this scenario, blocks may not map directly to the target chunks, and so may result in more data being fetched and cached than is necessary.

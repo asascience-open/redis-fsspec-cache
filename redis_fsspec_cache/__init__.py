@@ -1,4 +1,2 @@
-# TODO
-
-from .cache import RedisBlockCache #noqa
+# module: __init__.py
 from .filesystem import RedisCachingFileSystem #noqa
