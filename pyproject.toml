@@ -22,10 +22,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mpiannucci/redis-block-fsspec-cache"
-Issues = "https://github.com/mpiannucci/redis-block-fsspec-cache/issues"
+Homepage = "https://github.com/mpiannucci/redis-fsspec-cache"
+Issues = "https://github.com/mpiannucci/redis-fsspec-cache/issues"
 
 [tool.setuptools]
 packages = [
-    "redis_block_fsspec_cache",
+    "redis_fsspec_cache",
 ]

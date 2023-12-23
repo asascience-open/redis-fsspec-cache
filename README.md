@@ -1,4 +1,4 @@
-# redis_block_fsspec_cache
+# redis_fsspec_cache
 
 A prototype redis based filesystem cache for fsspec
 
@@ -17,7 +17,7 @@ pip install git+https://github.com/mpiannucci/redis-block-fsspec-cache.git
 ## Usage
 
 ```python
-from redis_block_fsspec_cache import RedisCachingFileSystem
+from redis_fsspec_cache import RedisCachingFileSystem
 
 fs = RedisCachingFileSystem(
     redis_host="localhost",

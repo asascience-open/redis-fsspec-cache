@@ -3,7 +3,7 @@ from fsspec import AbstractFileSystem, filesystem
 from fsspec.implementations.cache_mapper import AbstractCacheMapper, create_cache_mapper
 from redis import Redis
 
-from redis_block_fsspec_cache.cache import RedisBlockCache
+from redis_fsspec_cache.cache import RedisBlockCache
 
 
 class RedisCachingFileSystem(AbstractFileSystem):
