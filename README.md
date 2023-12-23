@@ -11,7 +11,7 @@ Specifically, this package looks to improve api route response times when buildi
 ## Installation
 
 ```bash
-pip install git+https://github.com/mpiannucci/redis-block-fsspec-cache.git
+pip install git+https://github.com/mpiannucci/redis-fsspec-cache.git
 ```
 
 ## Usage
