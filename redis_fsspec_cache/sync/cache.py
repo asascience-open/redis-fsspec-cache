@@ -33,6 +33,10 @@ class RedisBlockCache(BaseCache):
         The time in seconds after which a redis copy is considered useless.
         Set to false to prevent expiry. The default is equivalent to one
         week.
+    cache_key_prefix : str
+        The prefix to use for the keys in the redis cache. This is useful
+        when using the same redis instance for multiple caches. The default
+        key prefix is `fsspec-redis-cache`.
     """
 
     name = "redisblockcache"
@@ -45,11 +49,13 @@ class RedisBlockCache(BaseCache):
         filename: str = None,
         redis: Redis = None,
         expiry: int = 604800,
+        cache_key_prefix: str = "fsspec-redis-cache",
     ) -> None:
         super().__init__(blocksize, fetcher, size)
         self.redis = redis
         self.filename = filename
         self.expiry = expiry
+        self.cache_key_prefix = cache_key_prefix
 
     def __repr__(self) -> str:
         return (
@@ -81,12 +87,12 @@ class RedisBlockCache(BaseCache):
         return all_bytes[start_block_offset:start_block_offset + (stop - start)]
 
     def _fetch_cache_block(self, i_block: int) -> bytes:
-        block = self.redis.get(f"{self.filename}-{i_block}")
+        block = self.redis.get(f"{self.cache_key_prefix}-{self.filename}-{i_block}")
         if block is None:
             block = self.fetcher(
                 i_block * self.blocksize, (i_block + 1) * self.blocksize
             )
-            self.redis.set(f"{self.filename}-{i_block}", block, ex=self.expiry)
+            self.redis.set(f"{self.cache_key_prefix}-{self.filename}-{i_block}", block, ex=self.expiry)
         return block
 
 
@@ -114,6 +120,10 @@ class RedisChunkCache(BaseCache):
         The time in seconds after which a redis copy is considered useless.
         Set to false to prevent expiry. The default is equivalent to one
         week.
+    cache_key_prefix : str
+        The prefix to use for the keys in the redis cache. This is useful
+        when using the same redis instance for multiple caches. The default
+        key prefix is `fsspec-redis-cache`.
     """
 
     name = "redischunkcache"
@@ -131,11 +141,13 @@ class RedisChunkCache(BaseCache):
         filename: str = None,
         redis: Redis = None,
         expiry: int = 604800,
+        cache_key_prefix: str = "fsspec-redis-cache",
     ) -> None:
         super().__init__(blocksize, fetcher, size)
         self.redis = redis
         self.filename = filename
         self.expiry = expiry
+        self.cache_key_prefix = cache_key_prefix
 
     def _fetch(self, start: int | None, stop: int | None) -> bytes:
         if start is None:
@@ -145,8 +157,8 @@ class RedisChunkCache(BaseCache):
         if start >= self.size or start >= stop:
             return b""
         
-        chunk = self.redis.get(f"{self.filename}-{start}-{stop}")
+        chunk = self.redis.get(f"{self.cache_key_prefix}-{self.filename}-{start}-{stop}")
         if chunk is None:
             chunk = self.fetcher(start, stop)
-            self.redis.set(f"{self.filename}-{start}-{stop}", chunk, ex=self.expiry)
+            self.redis.set(f"{self.cache_key_prefix}-{self.filename}-{start}-{stop}", chunk, ex=self.expiry)
         return chunk

@@ -3,7 +3,7 @@ from fsspec import AbstractFileSystem, filesystem
 from fsspec.implementations.cache_mapper import AbstractCacheMapper, create_cache_mapper
 from redis import Redis
 
-from redis_fsspec_cache.cache import RedisBlockCache, RedisChunkCache
+from .cache import RedisBlockCache, RedisChunkCache
 
 
 class RedisCachingFileSystem(AbstractFileSystem):
@@ -19,13 +19,14 @@ class RedisCachingFileSystem(AbstractFileSystem):
 
     def __init__(
         self,
-        target_protocol=None,
         redis_host="localhost",
         redis_port="6379",
         redis=None,
         check_files=False,
         expiry_time=604800,
         method="block",
+        cache_key_prefix="fsspec-redis-cache",
+        target_protocol=None,
         target_options=None,
         fs=None,
         same_names: bool | None = None,
@@ -61,6 +62,10 @@ class RedisCachingFileSystem(AbstractFileSystem):
             the RedisBlockCache, which caches blocks of a fixed size. 'chunk' will use
             the RedisChunkCache, which caches chunks of arbitrary size as they are
             requested.
+        cache_key_prefix : str
+            The prefix to use for the keys in the redis cache. This is useful
+            when using the same redis instance for multiple caches. The default
+            key prefix is `fsspec-redis-cache`.
         target_options: dict or None
             Passed to the instantiation of the FS, if fs is None.
         fs: filesystem instance
@@ -90,12 +95,12 @@ class RedisCachingFileSystem(AbstractFileSystem):
                 "Both filesystems (fs) and target_protocol may not be both given."
             )
 
-        self.redis = Redis(host=redis_host, port=redis_port, db=0)
         self.kwargs = target_options or {}
         self.expiry = expiry_time
         self.check_files = check_files
         self.compression = compression
         self.method = method
+        self.cache_key_prefix = cache_key_prefix
 
         if same_names is not None and cache_mapper is not None:
             raise ValueError(
@@ -166,9 +171,9 @@ class RedisCachingFileSystem(AbstractFileSystem):
 
         # TODO: compression
         if self.method == "block":
-            f.cache = RedisBlockCache(f.blocksize, f._fetch_range, f.size, path, self.redis, self.expiry)
+            f.cache = RedisBlockCache(f.blocksize, f._fetch_range, f.size, path, self.redis, self.expiry, self.cache_key_prefix)
         elif self.method == "chunk":
-            f.cache = RedisChunkCache(f.blocksize, f._fetch_range, f.size, path, self.redis, self.expiry)
+            f.cache = RedisChunkCache(f.blocksize, f._fetch_range, f.size, path, self.redis, self.expiry, self.cache_key_prefix)
         return f
 
     def hash_name(self, path: str, *args: Any) -> str:
