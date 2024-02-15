@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, ClassVar, Optional
 from fsspec import filesystem
 from fsspec.asyn import AsyncFileSystem
 
@@ -18,6 +18,8 @@ class RedisAsyncCachingFilesystem(AsyncFileSystem):
     through to the target filesystem, and the result is cached in Redis when 
     applicable.
     """
+
+    protocol: ClassVar[str | tuple[str, ...]] = "redisasynccached"
 
     def __init__(
         self,
@@ -88,7 +90,10 @@ class RedisAsyncCachingFilesystem(AsyncFileSystem):
 
     async def _cat_file(self, path, start=None, end=None, **kwargs):
         # TODO: Cache here
-        await self.fs.cat_file(path, start=start, end=end, **kwargs)
+        return await self.fs._cat_file(path, start=start, end=end, **kwargs)
+
+    async def _cp_file(self, path1, path2, **kwargs):
+        return await self.fs._cp_file(path1, path2, **kwargs)
 
     async def _get_file(self, rpath, lpath, **kwargs):
         # TODO: Maybe cache here?
@@ -109,7 +114,10 @@ class RedisAsyncCachingFilesystem(AsyncFileSystem):
     
     async def _makedirs(self, path, exist_ok=False):
         return await self.fs._makedirs(path, exist_ok)
-    
+
+    async def _pipe_file(self, path, value, **kwargs):
+        return await self.fs._pipe_file(path, value, **kwargs)
+
     async def _rm_file(self, path, **kwargs):
         return await self.fs._rm_file(path, **kwargs)
 
