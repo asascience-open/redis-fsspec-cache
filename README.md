@@ -1,6 +1,6 @@
 # redis_fsspec_cache
 
-A prototype redis based filesystem cache for fsspec
+A simple redis based filesystem cache for fsspec
 
 ### Motivation
 
