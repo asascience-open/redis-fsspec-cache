@@ -3,3 +3,4 @@ s3fs
 gcsfs
 xarray
 jinja2
+ipykernel
