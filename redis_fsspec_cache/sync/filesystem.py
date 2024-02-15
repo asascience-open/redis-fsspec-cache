@@ -19,13 +19,13 @@ class RedisCachingFileSystem(AbstractFileSystem):
 
     def __init__(
         self,
-        target_protocol=None,
         redis_host="localhost",
         redis_port="6379",
         redis=None,
         check_files=False,
         expiry_time=604800,
         method="block",
+        target_protocol=None,
         target_options=None,
         fs=None,
         same_names: bool | None = None,
