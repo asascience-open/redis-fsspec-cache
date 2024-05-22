@@ -39,7 +39,7 @@ new_cached_fs = RedisCachingReferenceFileSystem(
 )
 ```
 
-See [xarray_usage.ipynb](./examples/xarray_usage.ipynb) for a more detailed example of usage with xarray and zarr.
+See [xarray_usage.ipynb](./examples/xarray_kerchunk_usage.ipynb) for a more detailed example of usage with xarray and zarr.
 
 ### Synchronous (Traditional File Systems)
 
@@ -63,6 +63,18 @@ When a block or chunk is cached, it will be visible in redis using the `KEYS` co
 ```bash
 KEYS *
 1) "noaa-hrrr-bdp-pds/hrrr.20230927/conus/hrrr.t00z.wrfsubhf00.grib2-0"
+```
+
+You can also use the protocol directly
+
+```python
+with fsspec.open(
+    "rediscache::s3://nextgen-dmac-cloud-ingest/nos/ngofs2/nos.ngofs2.fields.best.nc.zarr",
+    mode="r",
+    s3={"anon": True},
+    rediscache={"redis_port": 6380, "expiry": 60},
+) as f:
+    # Do stuff with f
 ```
 
 #### Block vs Chunk Caching
