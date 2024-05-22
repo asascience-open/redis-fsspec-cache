@@ -1,4 +1,6 @@
 from typing import Optional
+import hashlib
+import json
 import pickle
 from redis import Redis
 from fsspec.implementations.reference import ReferenceFileSystem
@@ -53,6 +55,14 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
         """
         super().__init__(**kwargs)
 
+        fo = kwargs.get("fo", 'unknown')
+        if isinstance(fo, str):
+            self.source = fo
+        elif isinstance(fo, dict):
+            self.source = hashlib.md5(json.dumps(fo).encode()).hexdigest()
+        else:
+            self.source = "unknown"
+
         if redis is None:
             self.redis = Redis(host=redis_host, port=redis_port, db=0)
         else:
@@ -74,7 +84,7 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
         """
         Returns the cache key for the given path.
         """
-        key = f"{self.cache_key_prefix}-{path}"
+        key = f"{self.source}-{self.cache_key_prefix}-{path}"
         if start is not None:
             key += f"-{start}"
         if end is not None:
