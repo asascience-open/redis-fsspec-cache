@@ -94,8 +94,6 @@ class RedisCachingFileSystem(AbstractFileSystem):
             raise ValueError(
                 "Both filesystems (fs) and target_protocol may not be both given."
             )
-        
-        print(kwargs)
 
         self.kwargs = target_options or {}
         self.expiry = expiry_time
@@ -116,7 +114,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
                 same_names if same_names is not None else False
             )
 
-        print(redis_host, redis_port)
+
         if redis is not None:
             self.redis = redis
         else:
