@@ -118,7 +118,6 @@ class RedisCachingFileSystem(AbstractFileSystem):
                 same_names if same_names is not None else False
             )
 
-        print(redis_host, redis_port)
         if redis is not None:
             self.redis = redis
         else:
