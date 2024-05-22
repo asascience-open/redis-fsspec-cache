@@ -15,7 +15,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
     set to 1 day by default, but can be configured with the `ttl` parameter.
     """
 
-    protocol: ClassVar[str | tuple[str, ...]] = "rediscached"
+    protocol: ClassVar[str | tuple[str, ...]] = "rediscache"
 
     def __init__(
         self,
@@ -113,6 +113,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
             self._mapper = create_cache_mapper(
                 same_names if same_names is not None else False
             )
+
 
         if redis is not None:
             self.redis = redis
