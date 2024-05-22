@@ -84,7 +84,7 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
         """
         Returns the cache key for the given path.
         """
-        key = f"{self.source}-{self.cache_key_prefix}-{path}"
+        key = f"{self.cache_key_prefix}-{self.source}-{path}"
         if start is not None:
             key += f"-{start}"
         if end is not None:
