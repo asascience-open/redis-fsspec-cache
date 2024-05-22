@@ -15,6 +15,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
     set to 1 day by default, but can be configured with the `ttl` parameter.
     """
 
+    to_open: str = None
     protocol: ClassVar[str | tuple[str, ...]] = "rediscache"
 
     def __init__(
@@ -95,6 +96,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
                 "Both filesystems (fs) and target_protocol may not be both given."
             )
 
+        self.to_open = kwargs.get('fo', self.to_open)
         self.kwargs = target_options or {}
         self.expiry = expiry_time
         self.check_files = check_files
@@ -113,7 +115,6 @@ class RedisCachingFileSystem(AbstractFileSystem):
             self._mapper = create_cache_mapper(
                 same_names if same_names is not None else False
             )
-
 
         if redis is not None:
             self.redis = redis
@@ -146,6 +147,8 @@ class RedisCachingFileSystem(AbstractFileSystem):
 
         TODO: impl
         """
+
+        path = path if path != "" else self.to_open
         path = self._strip_protocol(path)
 
         path = self.fs._strip_protocol(path)
