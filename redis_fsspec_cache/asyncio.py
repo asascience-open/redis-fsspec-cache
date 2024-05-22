@@ -1,3 +1,5 @@
+import json
+import re
 from typing import Callable, ClassVar, Optional
 from fsspec import filesystem
 from fsspec.asyn import AsyncFileSystem
@@ -97,10 +99,13 @@ class RedisAsyncCachingFilesystem(AsyncFileSystem):
     async def _cat_file(self, path, start=None, end=None, **kwargs):
         cached = await self._get_cached(path, start, end)
         if cached is not None:
-            return cached
+            return json.loads(cached)
         chunk = await self.fs._cat_file(path, start=start, end=end, **kwargs)
-        await self._put_cache(chunk, path, start, end)
-        return chunk
+        chunk = re.sub(r'^\s*\{\s*"version"\s*:', '{"source":"' + path + '","version":', chunk.decode())
+        await self._put_cache(chunk.encode('utf-8'), path, start, end)
+
+        clean_chunk = json.loads(chunk)
+        return clean_chunk
 
     async def _cp_file(self, path1, path2, **kwargs):
         return await self.fs._cp_file(path1, path2, **kwargs)

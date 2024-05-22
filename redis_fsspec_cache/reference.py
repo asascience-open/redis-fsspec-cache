@@ -18,10 +18,12 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
     to change, TBD
     """
 
+    source = ""
     protocol = "rediscachedreference"
 
     def __init__(
         self,
+        fo,
         redis_host: str = "localhost",
         redis_port: int = 6379,
         redis: Optional[Redis] = None,
@@ -51,13 +53,14 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
         kwargs : dict
             keyword arguments to pass to the target reference filesystem (The same arguments as ReferenceFileSystem)
         """
-        super().__init__(**kwargs)
+        super().__init__(fo=fo, **kwargs)
 
         if redis is None:
             self.redis = Redis(host=redis_host, port=redis_port, db=0)
         else:
             self.redis = redis
 
+        self.source = fo["source"]
         self.expiry = expiry_time
         self.cache_key_prefix = cache_key_prefix
 
@@ -74,7 +77,7 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
         """
         Returns the cache key for the given path.
         """
-        key = f"{self.cache_key_prefix}-{path}"
+        key = f"{self.cache_key_prefix}-{self.source}-{path}"
         if start is not None:
             key += f"-{start}"
         if end is not None:
