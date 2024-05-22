@@ -95,8 +95,6 @@ class RedisCachingFileSystem(AbstractFileSystem):
             raise ValueError(
                 "Both filesystems (fs) and target_protocol may not be both given."
             )
-        
-        print(kwargs)
 
         self.to_open = kwargs.get('fo', self.to_open)
         self.kwargs = target_options or {}
