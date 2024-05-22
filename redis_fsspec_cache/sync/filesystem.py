@@ -1,3 +1,5 @@
+import pickle
+
 from typing import Any, Callable, ClassVar
 from fsspec import AbstractFileSystem, filesystem
 from fsspec.implementations.cache_mapper import AbstractCacheMapper, create_cache_mapper
@@ -16,6 +18,7 @@ class RedisCachingFileSystem(AbstractFileSystem):
     """
 
     to_open: str = None
+    fs_info: Callable = None
     protocol: ClassVar[str | tuple[str, ...]] = "rediscache"
 
     def __init__(
@@ -133,6 +136,23 @@ class RedisCachingFileSystem(AbstractFileSystem):
             return self.fs._strip_protocol(type(self)._strip_protocol(path))
 
         self._strip_protocol: Callable = _strip_protocol
+
+        def info(path, **kwargs):
+            cached_info = self.redis.get(f"{self.cache_key_prefix}-{path}-info")
+            if cached_info is not None:
+                return pickle.loads(cached_info)
+            
+            info_data = self.fs_info(path, **kwargs)
+            self.redis.set(
+                f"{self.cache_key_prefix}-{path}-info",
+                pickle.dumps(info_data) if not isinstance(info_data, str) else info_data, 
+                ex=self.expiry
+            )
+
+            return info_data
+
+        self.fs_info = self.fs.info
+        self.fs.info = info
 
     def _open(
         self,
