@@ -30,5 +30,5 @@ rediscache = "redis_fsspec_cache.sync:RedisCachingFileSystem"
 
 [tool.setuptools]
 packages = [
-    "redis_fsspec_cache",
+    "redis_fsspec_cache*",
 ]
