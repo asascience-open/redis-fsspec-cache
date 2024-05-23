@@ -100,6 +100,7 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
         data = self.redis.get(key)
         if data is None:
             return None
+        print("got data redis: ", key)
         return pickle.loads(data)
 
     def _put_cache(self, data, path, start=None, end=None):
