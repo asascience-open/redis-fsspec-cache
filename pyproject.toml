@@ -27,8 +27,3 @@ Issues = "https://github.com/mpiannucci/redis-fsspec-cache/issues"
 
 [project.entry-points."fsspec.specs"]
 rediscache = "redis_fsspec_cache.sync:RedisCachingFileSystem"
-
-[tool.setuptools]
-packages = [
-    "redis_fsspec_cache*",
-]
