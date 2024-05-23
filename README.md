@@ -39,7 +39,7 @@ new_cached_fs = RedisCachingReferenceFileSystem(
 )
 ```
 
-See [xarray_usage.ipynb](./examples/xarray_kerchunk_usage.ipynb) for a more detailed example of usage with xarray and zarr.
+See [xarray_kerchunk_usage.ipynb](./examples/xarray_kerchunk_usage.ipynb) for a more detailed example of usage with xarray and zarr.
 
 ### Synchronous (Traditional File Systems)
 
