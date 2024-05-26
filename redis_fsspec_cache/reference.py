@@ -53,8 +53,6 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
         kwargs : dict
             keyword arguments to pass to the target reference filesystem (The same arguments as ReferenceFileSystem)
         """
-        super().__init__(**kwargs)
-
         fo = kwargs.get("fo", 'unknown')
         if isinstance(fo, str):
             self.source = fo
@@ -70,6 +68,16 @@ class RedisCachingReferenceFileSystem(ReferenceFileSystem):
 
         self.expiry = expiry_time
         self.cache_key_prefix = cache_key_prefix
+
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            # if init encountered an error, invalidate cache and try again
+            # this can happen if an s3 file has changed since we cached it,
+            # leading to a mismatched etag and s3fs.utils.FileExpired exception
+            self.invalidate_cache()
+            super().__init__(**kwargs)
+
 
     def cat(self, path, recursive=False, on_error="raise", **kwargs):
         cached = self._get_cached(path)
